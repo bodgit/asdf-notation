@@ -2,7 +2,6 @@
 
 set -euo pipefail
 
-# TODO: Ensure this is the correct GitHub homepage where releases can be downloaded for notation.
 GH_REPO="https://github.com/notaryproject/notation"
 TOOL_NAME="notation"
 TOOL_TEST="notation version"
@@ -36,13 +35,41 @@ list_all_versions() {
 	list_github_tags
 }
 
+get_machine_os() {
+	local OS
+	OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+
+	case "${OS}" in
+	darwin*) echo "darwin" ;;
+	linux*) echo "linux" ;;
+	*) fail "OS not supported: ${OS}" ;;
+	esac
+}
+
+get_machine_arch() {
+	local ARCH
+	ARCH=$(uname -m | tr '[:upper:]' '[:lower:]')
+
+	case "${ARCH}" in
+	i?86) echo "386" ;;
+	x86_64) echo "amd64" ;;
+	aarch64) echo "arm64" ;;
+	armv81) echo "arm64" ;;
+	arm64) echo "arm64" ;;
+	*) fail "Architecture not supported: ${ARCH}" ;;
+	esac
+}
+
 download_release() {
 	local version filename url
 	version="$1"
 	filename="$2"
 
+	os=$(get_machine_os)
+	arch=$(get_machine_arch)
+
 	# TODO: Adapt the release URL convention for notation
-	url="$GH_REPO/archive/v${version}.tar.gz"
+	url="$GH_REPO/releases/download/v${version}/${TOOL_NAME}_${version}_${os}_${arch}.tar.gz"
 
 	echo "* Downloading $TOOL_NAME release $version..."
 	curl "${curl_opts[@]}" -o "$filename" -C - "$url" || fail "Could not download $url"
